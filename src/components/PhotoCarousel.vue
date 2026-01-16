@@ -1,11 +1,13 @@
 <script setup>
 // 这里假设有5张照片。你可以根据实际情况修改数组。
 const photos = [
-  '/p1.jpg',
-  '/p2.jpg',
-  '/p3.jpg',
-  '/p4.jpg',
-  '/p5.jpg'
+  '/p1.png',
+  '/p2.png',
+  '/p3.png',
+  '/p4.png',
+  '/p5.png',
+  '/p6.png',
+  '/p7.png'
 ];
 </script>
 

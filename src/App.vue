@@ -1,207 +1,147 @@
 <script setup>
-import { ref, computed } from 'vue';
-import NorthStarBg from './components/NorthStarBg.vue';
-// 引入新组件
-import PhotoCarousel from './components/PhotoCarousel.vue';
-import GiftReveal from './components/GiftReveal.vue';
-
-// 状态定义：'INTRO' | 'MAIN' | 'GIFT'
-const viewState = ref('INTRO');
-const bgAudio = ref(null);
-
-const isIntro = computed(() => viewState.value === 'INTRO');
-const isMain = computed(() => viewState.value === 'MAIN');
-const isGift = computed(() => viewState.value === 'GIFT');
-// 只要不是 Intro 状态，背景人物就应该显示
-const showHeroes = computed(() => viewState.value !== 'INTRO');
-
-// 祝福语
-const blessingTitle = "TO: 召唤师";
-const blessingText = [
-  "在极寒的弗雷尔卓德星空下",
-  "愿指引你的北极星永远闪耀",
-  "祝你像黛安娜一样优雅坚韧",
-  "生日快乐，传奇永不熄灭！"
-];
-
-const startExperience = () => {
-  viewState.value = 'MAIN';
-  if (bgAudio.value) {
-    bgAudio.value.volume = 0.4;
-    bgAudio.value.play().catch(e => console.log("Autoplay prevented", e));
-  }
-};
-
-const showGift = () => {
-  viewState.value = 'GIFT';
-}
-</script>
-
-<template>
-  <main class="main-stage">
-    <audio ref="bgAudio" loop src="/bgm.mp3"></audio>
-    <NorthStarBg />
-
-    <div class="hero-layer diana" :class="{ 'active': showHeroes }"></div>
-    <div class="hero-layer zed" :class="{ 'active': showHeroes }"></div>
-
-    <transition name="fade">
-      <div v-if="isIntro" class="screen-center intro-screen">
-        <div class="hex-btn start-btn" @click="startExperience">
-          <span>开启星界</span>
-          <div class="hex-glow"></div>
-        </div>
+  import { ref, onMounted } from 'vue';
+  import AuroraScene from './components/AuroraScene.vue';
+  import GiftReveal from './components/GiftReveal.vue'; // 确保这个文件存在
+  
+  const stage = ref('INTRO');
+  const bgAudio = ref(null);
+  const isShaking = ref(false); // 控制屏幕抖动
+  
+  // --- 音效管理器 ---
+  const sfxPlayers = {};
+  // 预加载音效
+  onMounted(() => {
+      // 请确保 public 文件夹下有这4个音频文件
+      sfxPlayers.whoosh = new Audio('/sfx-whoosh.mp3');
+      sfxPlayers.whoosh.volume = 0.6;
+      sfxPlayers.moonBurst = new Audio('/sfx-moon-burst.mp3');
+      sfxPlayers.moonBurst.volume = 0.8;
+      sfxPlayers.zedLaugh = new Audio('/sfx-zed-laugh.mp3');
+      sfxPlayers.zedPop = new Audio('/sfx-zed-pop.mp3');
+      sfxPlayers.zedPop.volume = 1.0;
+  });
+  
+  // 提供给子组件调用的播放函数
+  const handlePlaySfx = (sfxName) => {
+      const player = sfxPlayers[sfxName];
+      if (player) {
+          player.currentTime = 0; // 每次从头播放
+          player.play().catch(() => {}); // 忽略自动播放限制的报错
+      }
+  };
+  // ----------------
+  
+  const memoryPhotos = ['/p1.png', '/p2.png', '/p3.png', '/p4.png', '/p5.png'];
+  const blessingText = ["寒冰血脉见证此刻", "如北极星般指引方向", "如影流之主般掌控命运", "生日快乐，最强王者！"];
+  
+  const startSequence = () => {
+    stage.value = 'ANIMATING';
+    if (bgAudio.value) {
+      bgAudio.value.volume = 0.4;
+      bgAudio.value.play().catch(() => {});
+    }
+  };
+  
+  // 3D 动画大招爆炸时触发的回调
+  const onSceneAnimationComplete = () => {
+    // 触发剧烈的屏幕抖动
+    isShaking.value = true;
+    setTimeout(() => {
+        isShaking.value = false;
+        stage.value = 'CARD'; // 显示贺卡
+    }, 800); // 抖动持续时间要配合爆炸音效的长度
+  };
+  
+  const showGift = () => { stage.value = 'GIFT'; };
+  </script>
+  
+  <template>
+    <main class="main-container" :class="{ 'screen-shake': isShaking }">
+      <audio ref="bgAudio" loop src="/bgm.mp3"></audio>
+      
+      <AuroraScene 
+        :startTrigger="stage === 'ANIMATING'" 
+        :photos="memoryPhotos"
+        @animation-complete="onSceneAnimationComplete"
+        @play-sfx="handlePlaySfx"
+      />
+  
+      <div class="hero-wrapper" :class="{ 'faded': stage !== 'INTRO' && stage !== 'CARD' }">
+          <div class="hero diana"></div>
+          <div class="hero zed"></div>
       </div>
-    </transition>
-
-    <transition name="fade-slide" mode="out-in">
-
-      <div v-if="isMain" class="screen-center card-glass main-card-layout">
-        <div class="content-inner">
-          <div class="rune-icon">✧</div>
-          <h1>{{ blessingTitle }}</h1>
-          <div class="divider"></div>
-          <div class="text-block">
-            <p v-for="(line, index) in blessingText" :key="index" :style="{ animationDelay: `${index * 0.2}s` }">
-              {{ line }}
-            </p>
+  
+      <div class="ui-layer">
+        <transition name="fade">
+          <div v-if="stage === 'INTRO'" class="intro-box">
+            <button class="hex-btn start-btn" @click="startSequence">
+              <span>开启星界</span>
+            </button>
           </div>
-        </div>
-
-        <PhotoCarousel />
-
-        <div class="hex-btn next-btn" @click="showGift">
-          <span>查看神秘掉落</span>
-        </div>
+        </transition>
+  
+        <transition name="pop-in">
+          <div v-if="stage === 'CARD'" class="card-glass">
+              <div class="rune-header">✧ NORTH STAR ✧</div>
+              <h1 class="summoner-name">TO: 召唤师</h1>
+              <div class="text-content">
+                  <p v-for="(t, i) in blessingText" :key="i" :style="{animationDelay: i*0.2 + 0.5 + 's'}">
+                      {{ t }}
+                  </p>
+              </div>
+              <div class="btn-row">
+                  <button class="hex-btn" @click="showGift">查看掉落</button>
+              </div>
+          </div>
+        </transition>
+  
+        <transition name="fade">
+          <div v-if="stage === 'GIFT'" class="gift-wrapper">
+              <GiftReveal />
+          </div>
+        </transition>
       </div>
-
-      <div v-else-if="isGift" class="screen-center card-glass gift-card-layout">
-        <GiftReveal />
-      </div>
-
-    </transition>
-  </main>
-</template>
-
-<style>
-/* ... (保留之前的全局样式: body, html, main-stage, hero-layer 等) ... */
-body, html {
-  margin: 0; padding: 0; overflow: hidden;
-  background-color: #050810;
-  font-family: 'Cinzel', serif;
-  color: #fff;
-}
-.main-stage { position: relative; width: 100vw; height: 100vh; }
-.hero-layer {
-  position: absolute; top: 0; bottom: 0; width: 60%;
-  background-size: cover; background-repeat: no-repeat;
-  z-index: 2; opacity: 0;
-  transition: opacity 2s ease-in-out, transform 10s ease-out;
-  mix-blend-mode: screen;
-  filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.3));
-  pointer-events: none; /* 防止遮挡鼠标事件 */
-}
-.hero-layer.active { opacity: 0.6; transform: scale(1.05); }
-.diana { left: -5%; background-image: url('/diana.jpg'); background-position: center top; mask-image: linear-gradient(to right, black 20%, transparent 100%); -webkit-mask-image: linear-gradient(to right, black 20%, transparent 100%); }
-.zed { right: -5%; background-image: url('/zed.jpg'); background-position: center top; mask-image: linear-gradient(to left, black 20%, transparent 100%); -webkit-mask-image: linear-gradient(to left, black 20%, transparent 100%); }
-
-
-/* --- 新增/修改的样式 --- */
-
-/* 通用居中容器 */
-.screen-center {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 10;
-}
-
-/* Intro 特定样式 */
-.intro-screen {
-  width: 100%; height: 100%;
-  display: flex; justify-content: center; align-items: center;
-  background: rgba(5, 8, 16, 0.8);
-  backdrop-filter: blur(5px);
-}
-
-/* 通用海克斯按钮样式 */
-.hex-btn {
-  position: relative;
-  padding: 15px 40px;
-  border: 1px solid #c8aa6e;
-  color: #c8aa6e;
-  font-size: 1.2rem;
-  cursor: pointer;
-  overflow: hidden;
-  transition: all 0.3s;
-  letter-spacing: 2px;
-  background: rgba(0, 20, 40, 0.6);
-  box-shadow: 0 0 15px rgba(200, 170, 110, 0.2);
-  text-align: center;
-}
-.hex-btn:hover {
-  background: rgba(200, 170, 110, 0.2);
-  box-shadow: 0 0 25px rgba(200, 170, 110, 0.6);
-  text-shadow: 0 0 8px #c8aa6e;
-}
-.start-btn { font-size: 1.5rem; }
-.next-btn { margin-top: 2rem; width: fit-content; margin-left: auto; margin-right: auto;}
-
-
-/* 玻璃卡片容器修改 */
-.card-glass {
-  width: auto; /* 宽度自适应内容 */
-  max-width: 90%;
-  max-height: 90vh; /* 防止过高 */
-  overflow-y: auto; /* 如果内容太多允许滚动 */
-  padding: 2rem 3rem;
-  background: rgba(10, 20, 40, 0.5);
-  border: 1px solid rgba(0, 210, 255, 0.3);
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 210, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 4px;
-  /* 隐藏滚动条但保留功能 */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.card-glass::-webkit-scrollbar { display: none; }
-
-/* 主界面和礼物界面的特定布局微调 */
-.main-card-layout { display: flex; flex-direction: column; align-items: center; }
-.gift-card-layout { padding: 3rem; }
-
-
-/* 内容样式 */
-.content-inner { text-align: center; margin-bottom: 1rem; }
-.content-inner h1 {
-  font-size: 1.8rem; margin-bottom: 0.5rem;
-  background: linear-gradient(to bottom, #f0e6d2, #c8aa6e);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-.divider { height: 2px; background: linear-gradient(90deg, transparent, #00d2ff, transparent); margin: 1rem auto; width: 60%; }
-.text-block p {
-  font-size: 1rem; line-height: 1.6; color: #e0faff; margin: 0.3rem 0;
-  opacity: 0; animation: fadeSlideUp 0.8s forwards;
-}
-.rune-icon { font-size: 1.2rem; color: #00d2ff; animation: pulse 3s infinite; }
-
-/* --- 动画定义 --- */
-@keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; text-shadow: 0 0 5px #00d2ff; }
-  50% { opacity: 1; text-shadow: 0 0 20px #00d2ff; }
-}
-
-/* Vue Transitions */
-/* Fade (用于 Intro) */
-.fade-enter-active, .fade-leave-active { transition: opacity 0.8s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-
-/* Fade-Slide (用于主界面和礼物界面切换) */
-.fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-.fade-slide-enter-from { opacity: 0; transform: translate(-50%, -40%) scale(0.95); } /* 进入时稍微有点缩放和位移 */
-.fade-slide-leave-to { opacity: 0; transform: translate(-50%, -60%) scale(1.05); } /* 离开时向上飘并放大一点 */
-</style>
+    </main>
+  </template>
+  
+  <style>
+  /* ... 保持之前的样式不变 ... */
+  body { margin: 0; background: #000; color: #fff; font-family: 'Cinzel', serif; overflow: hidden; }
+  .main-container { position: relative; width: 100vw; height: 100vh; transition: transform 0.1s; }
+  .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; display: flex; justify-content: center; align-items: center; }
+  .ui-layer > * { pointer-events: auto; }
+  .hero-wrapper { position: absolute; width: 100%; height: 100%; z-index: 2; transition: opacity 0.8s; pointer-events: none; }
+  .hero-wrapper.faded { opacity: 0; }
+  .hero { position: absolute; top: 0; bottom: 0; width: 50%; background-size: cover; mix-blend-mode: screen; opacity: 0.6; }
+  .diana { left: 0; background-image: url('/diana.jpg'); mask-image: linear-gradient(to right, black, transparent); }
+  .zed { right: 0; background-image: url('/zed.jpg'); mask-image: linear-gradient(to left, black, transparent); }
+  
+  /* --- 新增：剧烈屏幕抖动 --- */
+  .screen-shake {
+      animation: rough-shake 0.8s cubic-bezier(.36,.07,.19,.97) both;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      perspective: 1000px;
+  }
+  @keyframes rough-shake {
+    10%, 90% { transform: translate3d(-5px, 0, 0) rotate(-1deg); }
+    20%, 80% { transform: translate3d(10px, 0, 0) rotate(2deg); }
+    30%, 50%, 70% { transform: translate3d(-15px, 0, 0) rotate(-3deg) scale(1.02); filter: hue-rotate(30deg); } /* 抖动时带一点色偏和放大 */
+    40%, 60% { transform: translate3d(15px, 0, 0) rotate(3deg) scale(1.02); }
+  }
+  
+  /* --- 贺卡调整 --- */
+  .card-glass { background: rgba(10, 20, 35, 0.8); border: 2px solid #00d2ff; padding: 3rem; text-align: center; backdrop-filter: blur(15px); box-shadow: 0 0 80px rgba(0, 210, 255, 0.4); border-radius: 8px; }
+  .summoner-name { font-size: 2.8rem; background: linear-gradient(to right, #c8aa6e, #fff, #c8aa6e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 1rem 0; text-shadow: 0 0 20px rgba(200, 170, 110, 0.5); }
+  .text-content p { color: #bfefff; font-size: 1.2rem; margin: 0.6rem 0; opacity: 0; animation: textFadeIn 0.8s forwards; text-shadow: 0 0 5px #00d2ff; }
+  .btn-row { margin-top: 2rem; }
+  @keyframes textFadeIn { to { opacity: 1; } }
+  .pop-in-enter-active { animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes popIn { 0% { opacity: 0; transform: scale(0.8) translateY(50px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+  
+  /* --- 按钮样式调整 --- */
+  .hex-btn { background: linear-gradient(45deg, rgba(0,20,40,0.8), rgba(0,40,80,0.8)); border: 2px solid #c8aa6e; color: #c8aa6e; padding: 15px 40px; font-size: 1.3rem; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; letter-spacing: 3px; box-shadow: 0 0 20px rgba(200,170,110,0.2); }
+  .hex-btn:hover { background: rgba(200, 170, 110, 0.3); box-shadow: 0 0 40px rgba(200, 170, 110, 0.6), inset 0 0 10px #c8aa6e; text-shadow: 0 0 10px #c8aa6e; }
+  .fade-enter-active, .fade-leave-active { transition: opacity 0.5s; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+  </style>
