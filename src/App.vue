@@ -12,7 +12,7 @@ const bgmUrl = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf0
 // 备用：如果上面失效，可以用这个: "https://assets.mixkit.co/music/preview/mixkit-ethereal-fairy-win-966.mp3"
 
 const memoryPhotos = ['/p1.png', '/p2.png', '/p3.png', '/p4.png', '/p5.png', "/p6.png", '/p7.png'];
-const blessingText = ["寒冰血脉见证此刻", "如北极星般指引方向", "如影流之主般掌控命运", "生日快乐，最强王者！"];
+const blessingText = ["寒冰血脉见证此刻", "如北极星般指引方向", "如影流之主般掌控命运", "生日快乐！"];
 
 const startSequence = () => {
   stage.value = 'ANIMATING';
@@ -60,14 +60,14 @@ const showGift = () => { stage.value = 'GIFT'; };
       <transition name="pop-in">
         <div v-if="stage === 'CARD'" class="card-glass">
           <div class="rune-header">✧ NORTH STAR ✧</div>
-          <h1 class="summoner-name">TO: 召唤师</h1>
+          <h1 class="summoner-name">TO: 夏文强</h1>
           <div class="text-content">
             <p v-for="(t, i) in blessingText" :key="i" :style="{animationDelay: i*0.2 + 0.5 + 's'}">
               {{ t }}
             </p>
           </div>
           <div class="btn-row">
-            <button class="hex-btn" @click="showGift">查看掉落</button>
+            <button class="hex-btn" @click="showGift">查看礼物</button>
           </div>
         </div>
       </transition>
