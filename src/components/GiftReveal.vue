@@ -5,6 +5,7 @@
 <template>
   <div class="gift-container">
     <h2 class="gift-title">生日专属赠礼</h2>
+    <h2 class="gift-title">正义假面 永恩</h2>
 
     <div class="skin-frame">
       <img src="/gift-skin.jpg" alt="Skin Gift" class="skin-img">
@@ -17,7 +18,6 @@
     </div>
 
     <div class="action-area">
-      <p class="gift-tip">检测到来自弗雷尔卓德的礼物信标</p>
       <div class="login-btn">
         → 立即上号领取 ←
       </div>

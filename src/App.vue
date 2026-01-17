@@ -8,7 +8,7 @@ const bgAudio = ref(null);
 const isShaking = ref(false);
 
 // 【修改】在线 BGM 地址 (空灵、极光风格)
-const bgmUrl = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=empty-mind-118973.mp3";
+const bgmUrl = "/bgm.mp3";
 // 备用：如果上面失效，可以用这个: "https://assets.mixkit.co/music/preview/mixkit-ethereal-fairy-win-966.mp3"
 
 const memoryPhotos = ['/p1.png', '/p2.png', '/p3.png', '/p4.png', '/p5.png', "/p6.png", '/p7.png'];
